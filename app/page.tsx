@@ -1,35 +1,34 @@
-'use client';
-import { useState } from 'react';
+"use client";
+import { FormEvent, useState } from "react";
+
+const work = [
+  ["01", "The Last Light", "Brand Film · 2026"],
+  ["02", "After Dark", "Commercial · 2026"],
+  ["03", "Made of Moments", "Campaign · 2026"],
+  ["04", "Quiet Luxury", "Photography · 2026"],
+];
+const services = [
+  ["Film", "Brand films, commercials and narrative production."],
+  ["Advertising", "Campaigns built around a sharp creative idea."],
+  ["Photography", "Editorial, product and cinematic stills."],
+  ["Post", "Editing, colour, sound and motion finishing."],
+];
 
 export default function Home() {
   const [sent, setSent] = useState(false);
-  const [chat, setChat] = useState(false);
-  const [messages, setMessages] = useState<string[]>([]);
-  const [input, setInput] = useState('');
-
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const r = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(f)) });
-    setSent(r.ok);
+    const form = new FormData(e.currentTarget);
+    const res = await fetch("/api/enquiries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
+    setSent(res.ok);
   }
-
-  function ask() {
-    if (!input.trim()) return;
-    setMessages([...messages, `You: ${input}`, `TAMTA AI: I can help scope your project. Tell me your service, timeline and approximate budget, and I’ll prepare an enquiry.`]);
-    setInput('');
-  }
-
-  return <>
-    <nav className="nav"><div className="brand">TAMTA STUDIOS</div><div className="navlinks"><a href="#work">Work</a><a href="#services">Services</a><a href="#enquire">Start a project</a></div></nav>
-    <main>
-      <section className="hero"><div className="wrap"><div className="eyebrow">Creative cinematic studio · India</div><h1>Stories become<br/><i>experiences.</i></h1><p>Film, advertising, photography and visual craft designed to make people feel something before they understand why.</p><a className="cta" href="#enquire">Start a project ↗</a></div></section>
-      <section className="section" id="work"><div className="wrap"><h2>Selected work.</h2><div className="grid"><div className="project"><div><span className="eyebrow">01 · Brand Film</span><h3>After the Light</h3></div></div><div className="project"><div><span className="eyebrow">02 · Advertising</span><h3>The Scent of Memory</h3></div></div><div className="project"><div><span className="eyebrow">03 · Photography</span><h3>Still / Moving</h3></div></div></div></div></section>
-      <section className="section" id="services"><div className="wrap"><h2>What we create.</h2><div className="grid">{['Film Production','Advertising','Brand Films','Photography','Post Production','Creative Direction'].map((x,i)=><div className="card" key={x}><span className="eyebrow">0{i+1}</span><h3>{x}</h3><p className="muted">From concept to final frame, built around the feeling the audience should leave with.</p></div>)}</div></div></section>
-      <section className="section" id="enquire"><div className="wrap"><h2>Tell us your story.</h2>{sent ? <p className="muted">Thank you. Your enquiry is in our system. We’ll be in touch.</p> : <form className="form" onSubmit={submit}><input name="name" placeholder="Your name" required/><input name="email" type="email" placeholder="Email" required/><input name="phone" placeholder="Phone / WhatsApp"/><input name="company" placeholder="Company / brand"/><select name="service" defaultValue=""><option value="" disabled>What do you need?</option><option>Film Production</option><option>Advertising</option><option>Brand Film</option><option>Photography</option><option>Post Production</option><option>Creative Direction</option></select><input name="budget" placeholder="Approx. budget"/><input name="timeline" placeholder="Desired timeline"/><textarea name="message" placeholder="Tell us about the project..."/><button className="cta" type="submit">Send enquiry ↗</button></form>}</div></section>
-    </main>
-    <footer className="footer"><div className="wrap">TAMTA STUDIOS · Stories become experiences.</div></footer>
-    <button onClick={() => setChat(!chat)} className="chat-button">TAMTA AI</button>
-    {chat && <div className="chat-panel"><b>Creative Assistant</b><div className="chat-messages">{messages.join('\n\n') || 'Tell me what you want to create.'}</div><input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && ask()} placeholder="Ask about a project..."/></div>}
-  </>;
+  return <main>
+    <nav className="nav"><div className="shell navin"><a className="brand" href="#top">TAMTA STUDIOS</a><div className="navlinks"><a href="#work">Work</a><a href="#services">Services</a><a href="#contact">Start a project</a></div></div></nav>
+    <section className="hero" id="top"><div className="shell"><div className="eyebrow">Creative cinematic studio · India</div><h1>Stories,<br/>engineered as<br/><em>experiences.</em></h1><p>We make films, advertising and visual worlds that don't just show a story — they make you feel it.</p><div className="actions"><a className="btn primary" href="#contact">Start a project ↗</a><a className="btn" href="#work">Explore the work</a></div></div></section>
+    <section id="work"><div className="shell"><div className="sectionhead"><h2>Selected work</h2><p>A small selection of imagined and upcoming studio work. The final portfolio will become a living archive of every story we create.</p></div><div className="workgrid">{work.map(([n,t,d])=><article className="card" key={n}><span className="num">{n}</span><h3>{t}</h3><p>{d}</p></article>)}</div></div></section>
+    <section id="services"><div className="shell"><div className="sectionhead"><h2>What we make</h2><p>From the first idea to the final frame, we bring creative direction and production together.</p></div><div className="services">{services.map(([t,d])=><div className="service" key={t}><b>{t}</b><p>{d}</p></div>)}</div></div></section>
+    <section><div className="shell"><div className="eyebrow">The studio philosophy</div><div className="manifesto">The richest stories aren't watched. They stay with you.</div></div></section>
+    <section id="contact"><div className="shell contact"><div><div className="eyebrow">Start something</div><h2>Tell us what<br/>you're imagining.</h2></div><form className="form" onSubmit={submit}><input name="name" placeholder="Your name" required/><input name="email" type="email" placeholder="Email" required/><input name="company" placeholder="Company / brand"/><textarea name="brief" placeholder="Tell us about the project, timeline and budget..." required/><button className="btn primary" type="submit">{sent ? "Enquiry received ✓" : "Send enquiry →"}</button></form></div></section>
+    <footer className="shell footer"><b>TAMTA STUDIOS</b><span>Films · Ads · Photography · Visual experiences</span></footer>
+  </main>;
 }
