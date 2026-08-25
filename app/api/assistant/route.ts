@@ -20,7 +20,7 @@ Be conversational, thoughtful and concise. Think through the user's request befo
 
 If someone asks what TAMTA offers, explain the five areas naturally. If someone has an idea, help shape it instead of immediately pushing them to an enquiry form. When the visitor is ready to start a project, guide them toward the Start a Project / enquiry section.`;
 
-const demoReply = (messages: z.infer<typeof schema>['messages']) => {
+const demoReply = (messages: z.infer<typeof schema>["messages"]) => {
   const latest = messages[messages.length - 1].text.toLowerCase();
   if (latest.includes("offer") || latest.includes("service") || latest.includes("what do you")) {
     return "Welcome to TAMTA Studios. We work across Film, Advertising, Photography, Motion and our Creative Lab — taking ideas from early concept through to the final frame. If you tell me what you're trying to create, I can help you find the right direction.";
@@ -42,9 +42,12 @@ export async function POST(request: Request) {
     const { messages } = schema.parse(await request.json());
     const apiKey = process.env.OPENAI_API_KEY;
 
-    // Demo mode keeps the concierge useful until the OpenAI key is added in Vercel.
     if (!apiKey) {
-      return NextResponse.json({ ok: true, reply: demoReply(messages), agent: "tamta-concierge-demo" });
+      return NextResponse.json({
+        ok: false,
+        reply: "TAMTA Concierge is not connected to its AI service yet. Please check the OPENAI_API_KEY environment variable in Vercel.",
+        agent: "tamta-config-error",
+      }, { status: 503 });
     }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -54,7 +57,7 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-5-mini",
+        model: process.env.OPENAI_MODEL || "gpt-5.6",
         instructions: TAMTA_CONTEXT,
         input: messages.map((m) => ({ role: m.role, content: m.text })),
         max_output_tokens: 700,
@@ -62,8 +65,13 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok) {
-      console.error("OpenAI Responses API error", response.status, await response.text());
-      return NextResponse.json({ ok: true, reply: demoReply(messages), agent: "tamta-concierge-fallback" });
+      const errorText = await response.text();
+      console.error("OpenAI Responses API error", response.status, errorText);
+      return NextResponse.json({
+        ok: false,
+        reply: `The AI service returned an error (${response.status}). Please check the Vercel runtime logs for the exact OpenAI error.`,
+        agent: "tamta-openai-error",
+      }, { status: 502 });
     }
 
     const data = await response.json();
