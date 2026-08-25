@@ -1,0 +1,39 @@
+name: Update advertising image
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Replace advertising image URL
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/page.tsx')
+          s = p.read_text()
+          old = 'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1200&q=90'
+          new = 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1600&q=90'
+          if old in s:
+              p.write_text(s.replace(old, new, 1))
+          PY
+
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git commit -m "Update advertising capability image"
+          git push
