@@ -1,5 +1,17 @@
-/* Mobile menu — restored to the original smooth slide/fade interaction. */
+/* TAMTA mobile menu + rounded top navigation treatment */
 @media (max-width: 800px) {
+  main .nav {
+    width: calc(100% - 40px) !important;
+    margin: 10px auto 0 !important;
+    border: 0 !important;
+    border-radius: 28px !important;
+    background: rgba(245, 245, 247, 0.72) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+    overflow: hidden !important;
+  }
+
   .mobileMenu {
     display: block !important;
     overflow: hidden;
