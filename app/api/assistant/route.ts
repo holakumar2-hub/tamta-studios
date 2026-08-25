@@ -40,16 +40,10 @@ export async function POST(request: Request) {
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: TAMTA_CONTEXT },
-          ...messages.map((m) => ({ role: m.role, content: m.text })),
-        ],
+        messages: [{ role: "system", content: TAMTA_CONTEXT }, ...messages.map((m) => ({ role: m.role, content: m.text }))],
         max_tokens: 700,
         temperature: 0.7,
       }),
@@ -58,7 +52,9 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Groq API error", response.status, errorText);
-      return NextResponse.json({ ok: false, reply: `The AI service returned an error (${response.status}). Please check the Vercel runtime logs for the exact Groq error.`, agent: "tamta-groq-error" }, { status: 502 });
+      let detail = "Unknown Groq API error";
+      try { detail = JSON.parse(errorText)?.error?.message || detail; } catch {}
+      return NextResponse.json({ ok: false, reply: `Groq error (${response.status}): ${detail}`, agent: "tamta-groq-error" }, { status: 502 });
     }
 
     const data = await response.json();
