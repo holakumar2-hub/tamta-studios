@@ -54,7 +54,7 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-5.6-terra",
+        model: process.env.OPENAI_MODEL || "gpt-5-mini",
         instructions: TAMTA_CONTEXT,
         input: messages.map((m) => ({ role: m.role, content: m.text })),
         max_output_tokens: 700,
