@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
         messages: [{ role: "system", content: TAMTA_CONTEXT }, ...messages.map((m) => ({ role: m.role, content: m.text }))],
         max_tokens: 700,
         temperature: 0.7,
