@@ -22,65 +22,48 @@ If someone asks what TAMTA offers, explain the five areas naturally. If someone 
 
 const demoReply = (messages: z.infer<typeof schema>["messages"]) => {
   const latest = messages[messages.length - 1].text.toLowerCase();
-  if (latest.includes("offer") || latest.includes("service") || latest.includes("what do you")) {
-    return "Welcome to TAMTA Studios. We work across Film, Advertising, Photography, Motion and our Creative Lab — taking ideas from early concept through to the final frame. If you tell me what you're trying to create, I can help you find the right direction.";
-  }
-  if (latest.includes("advert") || latest.includes("campaign") || latest.includes("brand")) {
-    return "For advertising, TAMTA can help shape the creative idea, visual language and production approach. Tell me the brand, audience and what you want people to feel or do — I can help develop a few creative directions.";
-  }
-  if (latest.includes("film") || latest.includes("cinematic")) {
-    return "For film, we can think through the story, mood, visual language, locations, production scale and final delivery. What's the idea you have in mind? Even a rough thought is enough to start.";
-  }
-  if (latest.includes("photo") || latest.includes("photography")) {
-    return "TAMTA works with editorial, product, cinematic and campaign photography. Tell me what you're photographing and where the images will be used, and I can help shape the visual direction.";
-  }
+  if (latest.includes("offer") || latest.includes("service") || latest.includes("what do you")) return "Welcome to TAMTA Studios. We work across Film, Advertising, Photography, Motion and our Creative Lab — taking ideas from early concept through to the final frame. If you tell me what you're trying to create, I can help you find the right direction.";
+  if (latest.includes("advert") || latest.includes("campaign") || latest.includes("brand")) return "For advertising, TAMTA can help shape the creative idea, visual language and production approach. Tell me the brand, audience and what you want people to feel or do — I can help develop a few creative directions.";
+  if (latest.includes("film") || latest.includes("cinematic")) return "For film, we can think through the story, mood, visual language, locations, production scale and final delivery. What's the idea you have in mind? Even a rough thought is enough to start.";
+  if (latest.includes("photo") || latest.includes("photography")) return "TAMTA works with editorial, product, cinematic and campaign photography. Tell me what you're photographing and where the images will be used, and I can help shape the visual direction.";
   return "I'd love to hear the idea. Tell me what you're trying to make, who it's for, and anything you already know — format, mood, reference, timeline or budget. We can shape it from there.";
 };
 
 export async function POST(request: Request) {
   try {
     const { messages } = schema.parse(await request.json());
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({
-        ok: false,
-        reply: "TAMTA Concierge is not connected to its AI service yet. Please check the OPENAI_API_KEY environment variable in Vercel.",
-        agent: "tamta-config-error",
-      }, { status: 503 });
+      return NextResponse.json({ ok: false, reply: "TAMTA Concierge is not connected to its AI service yet. Please check the GROQ_API_KEY environment variable in Vercel.", agent: "tamta-config-error" }, { status: 503 });
     }
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-5.6",
-        instructions: TAMTA_CONTEXT,
-        input: messages.map((m) => ({ role: m.role, content: m.text })),
-        max_output_tokens: 700,
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: TAMTA_CONTEXT },
+          ...messages.map((m) => ({ role: m.role, content: m.text })),
+        ],
+        max_tokens: 700,
+        temperature: 0.7,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("OpenAI Responses API error", response.status, errorText);
-      return NextResponse.json({
-        ok: false,
-        reply: `The AI service returned an error (${response.status}). Please check the Vercel runtime logs for the exact OpenAI error.`,
-        agent: "tamta-openai-error",
-      }, { status: 502 });
+      console.error("Groq API error", response.status, errorText);
+      return NextResponse.json({ ok: false, reply: `The AI service returned an error (${response.status}). Please check the Vercel runtime logs for the exact Groq error.`, agent: "tamta-groq-error" }, { status: 502 });
     }
 
     const data = await response.json();
-    const reply = typeof data.output_text === "string" ? data.output_text.trim() : "";
-    return NextResponse.json({
-      ok: true,
-      reply: reply || demoReply(messages),
-      agent: "tamta-concierge-ai",
-    });
+    const reply = typeof data.choices?.[0]?.message?.content === "string" ? data.choices[0].message.content.trim() : "";
+    return NextResponse.json({ ok: true, reply: reply || demoReply(messages), agent: "tamta-concierge-ai" });
   } catch (error) {
     console.error("TAMTA Concierge error", error);
     return NextResponse.json({ ok: false, reply: "I couldn't process that right now. Please try again." }, { status: 400 });
