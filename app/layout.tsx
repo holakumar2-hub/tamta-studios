@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./premium.css";
+import "./menu-fix.css";
 
 export const metadata: Metadata = {
   title: "TAMTA Studios — Stories, engineered as experiences.",
