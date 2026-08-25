@@ -11,7 +11,7 @@ const work=[
 ];
 const caps=[
 ["Film","Stories built for the screen.","https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1200&q=90"],
-["Advertising","Ideas designed to be noticed.","https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1200&q=90"],
+["Advertising","Ideas designed to be noticed.","https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1600&q=90"],
 ["Photography","Images with a point of view.","https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=90"],
 ["Post","Every frame finished with intent.","https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1200&q=90"]
 ];
