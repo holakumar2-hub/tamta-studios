@@ -14,16 +14,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Replace advertising image URL
+      - name: Update Perspective presentation
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('app/page.tsx')
           s = p.read_text()
-          old = 'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1200&q=90'
-          new = 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1600&q=90'
+
+          # Keep the uploaded photograph at its original 2:3 portrait ratio.
+          s = s.replace('aspect-ratio:4/3;border:0;padding:0;', 'aspect-ratio:2/3;width:100%;max-width:430px;border:0;padding:0;')
+
+          # Ensure the image itself is never cropped.
+          s = s.replace('width:100%;height:100%;object-fit:cover}.normal', 'width:100%;height:100%;object-fit:contain}.normal', 1)
+
+          # Remove the large text overlay and replace it with a small location caption.
+          old = '<div className="stagecopy">Light is not always<br/><strong>what we first see.</strong></div><div className="stagebottom"><span>TAMTA / Perspective</span><span className="pill">{perspective?"RETURN TO REFLECTION ←":"REVEAL THE LIGHT →"}</span></div>'
+          new = '<div className="location">Location · Rishikesh</div>'
           if old in s:
-              p.write_text(s.replace(old, new, 1))
+              s = s.replace(old, new, 1)
+          else:
+              raise SystemExit('Perspective overlay markup not found; refusing to modify the file.')
+
+          # Add styling for the small location caption.
+          marker = '.contact{background:#fff}'
+          location_css = '.location{position:absolute;z-index:6;bottom:18px;left:20px;color:#fff;font-size:10px;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 2px 12px #000;pointer-events:none}'
+          if location_css not in s:
+              s = s.replace(marker, location_css + marker, 1)
+
+          p.write_text(s)
           PY
 
       - name: Commit change
@@ -35,5 +53,5 @@ jobs:
             echo "No changes needed"
             exit 0
           fi
-          git commit -m "Update advertising capability image"
+          git commit -m "Refine Perspective photo presentation"
           git push
