@@ -1,0 +1,50 @@
+name: Apply desktop contact layout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-contact-desktop-layout.yml'
+      - 'app/page.tsx'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[contact-layout-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply desktop-only contact layout
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/page.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          marker = '/* contact-desktop-v2 */'
+          if marker in text:
+              print('Desktop contact layout already applied.')
+              raise SystemExit(0)
+
+          old = '<style dangerouslySetInnerHTML={{__html:css}}/>'
+          new = old + '<style dangerouslySetInnerHTML={{__html:`@media(min-width:801px){.contact{padding:110px 0 100px}.contactgrid{grid-template-columns:1.05fr 1.35fr;gap:100px;align-items:center}.contactgrid>div:first-child{max-width:560px}.contact h2{font-size:clamp(52px,6.5vw,78px);max-width:560px}.contact p{max-width:460px}.form{max-width:620px;gap:14px}.form input,.form textarea{padding:17px 18px;border-radius:16px}.form textarea{min-height:170px}.form button{padding:13px 22px}} /* contact-desktop-v2 */`}}/> '
+
+          if old not in text:
+              raise SystemExit('Could not find the page style injection point.')
+
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          print('Applied desktop-only contact layout.')
+
+      - name: Commit layout change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Refine desktop contact layout [contact-layout-applied]"
+          git push
