@@ -1,0 +1,64 @@
+name: Refine desktop contact symmetry v6
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/center-contact-desktop-v6.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refine:
+    if: ${{ !contains(github.event.head_commit.message, '[contact-v6-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add desktop-only centered composition
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('app/page.tsx')
+          text = p.read_text(encoding='utf-8')
+          marker = '/* contact-desktop-symmetry-v6 */'
+          if marker in text:
+              print('v6 already applied')
+              raise SystemExit(0)
+
+          # page.tsx stores the page CSS in a template literal. Insert the override
+          # immediately before that template literal closes, without touching JSX or mobile rules.
+          end = text.find('`;', text.find('const css=`'))
+          if end == -1:
+              raise SystemExit('Could not locate CSS template literal')
+
+          override = '''@media(min-width:801px){
+            .contact{padding:110px 0 105px}
+            .contact .shell{width:min(1200px,calc(100% - 48px));margin:0 auto}
+            .contactgrid{width:min(1060px,100%);margin:0 auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:center}
+            .contactgrid>div:first-child{width:100%;max-width:500px;justify-self:start}
+            .contactgrid>div:last-child{width:100%;max-width:500px;justify-self:end}
+            .contact h2{font-size:clamp(54px,5.7vw,78px);line-height:.98;max-width:500px;margin:0}
+            .contact p{max-width:430px;margin-top:24px}
+            .form{width:100%;max-width:500px;gap:14px}
+            .form input,.form textarea{width:100%;padding:17px 18px;border-radius:16px}
+            .form textarea{min-height:170px}
+            .form button{padding:13px 22px}
+          } /* contact-desktop-symmetry-v6 */\n'''
+          p.write_text(text[:end] + override + text[end:], encoding='utf-8')
+          print('Applied v6 desktop-only centered contact composition')
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Center desktop contact section v6 [contact-v6-applied]"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
