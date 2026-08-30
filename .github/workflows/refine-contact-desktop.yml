@@ -1,0 +1,56 @@
+name: Refine desktop contact symmetry
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refine-contact-desktop.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add centered desktop contact override
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/page.tsx')
+          text = path.read_text(encoding='utf-8')
+          marker = '/* contact-desktop-symmetry-v3 */'
+          if marker in text:
+              print('Already applied')
+              raise SystemExit(0)
+
+          css = '''@media(min-width:801px){
+            .contact{padding:110px 0 100px}
+            .contactgrid{width:min(1060px,100%);margin:0 auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:center}
+            .contactgrid>div:first-child{max-width:500px;justify-self:start}
+            .contact h2{font-size:clamp(54px,5.7vw,78px);max-width:500px}
+            .contact p{max-width:430px}
+            .form{width:100%;max-width:500px;justify-self:end;gap:14px}
+            .form input,.form textarea{padding:17px 18px;border-radius:16px}
+            .form textarea{min-height:170px}
+            .form button{padding:13px 22px}
+          } /* contact-desktop-symmetry-v3 */'''
+
+          needle = '`;\nexport default function Home()'
+          if needle not in text:
+              raise SystemExit('Could not find CSS string terminator')
+          text = text.replace(needle, css + needle, 1)
+          path.write_text(text, encoding='utf-8')
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Center desktop contact section [contact-desktop-symmetry-v3]"
+          git push
